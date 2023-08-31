@@ -6,6 +6,8 @@ const saltRounds = 10;
 const jwt = require('jsonwebtoken');
 const nodemailer = require("nodemailer");
 
+console.log(config);
+
 var transport = nodemailer.createTransport({
     host: "smtp.office365.com",
     port: 587,
@@ -195,53 +197,6 @@ const access = async function (req, res) {
         const user = req.userDetails;
         var poolConnection = await sql.connect(config);
         console.log("connected");
-
-        // let arr2 = {
-        //     spend:{
-        //         ["Entity_Region P"]:["APAC","EMEA"],
-        //         ["CountryCode"]:["ESP","ITA","CHN"],
-        //         ["CompanyName"]:["ComapnyName 1","ComapnyName 2","ComapnyName 3"]
-        //     },
-        //     saving:{
-        //         ["Entity_Region P"]:["EMEA"],
-        //         ["CountryCode"]:["ESP","ITA","CHN"],
-        //         ["CompanyName"]:["ComapnyName 0","ComapnyName 1","ComapnyName 2","ComapnyName 3"]
-        //     },
-        //     action:{
-        //         ["Entity_Region P"]:["EMEA"],
-        //         ["Entity_Region"]:["France"],
-        //         ["CompanyName"]:["ComapnyName 2"]
-        //     }
-        // }
-
-        // let spend = arr2.spend;
-        // console.log(spend);
-        
-        // addString(spend);
-
-        // function addString(data){
-
-        //     let key = Object.keys(data);
-
-        //     key.map(x=>{
-
-            // })
-
-
-            // if(en.length !== 0){
-            //     const values = data.map((value) => `'${value}'`).join(', ');
-            //     if(spendString)
-            //     spendString += `WHERE [Entity_Region P] IN ${values}`
-            // }
-        // }
-
-        // let str2 = JSON.stringify(arr2);
-
-        // let updated = await poolConnection
-        //         .request()
-        //         .query(
-        //             `UPDATE DevOps.ExcessRights SET  Access = '{}' WHERE Email IN ('abhishek.singh@statxo.com','mohit.raykwar@statxo.com')`
-        //         );
 
         var data = await poolConnection.request().query(`SELECT *
         FROM [DevOps].[ExcessRights]`);
