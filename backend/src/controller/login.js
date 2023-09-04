@@ -121,11 +121,11 @@ const resetPass = async function (req, res) {
 
         const params = {
             Destination: {
-              ToAddresses: email, // Replace with the recipient's email address
+              ToAddresses: [email], // Replace with the recipient's email address
             },
             Message: {
               Body: {
-                Text: {
+                Html: {
                   Data: `<html>
                   <head>
                       <style type="text/css">

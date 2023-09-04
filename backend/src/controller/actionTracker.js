@@ -184,11 +184,11 @@ const actionAdd = async function (req, res) {
 
         const params = {
             Destination: {
-              ToAddresses: ApproverMail, // Replace with the recipient's email address
+              ToAddresses: [ApproverMail], // Replace with the recipient's email address
             },
             Message: {
               Body: {
-                Text: {
+                Html: {
                   Data: `<html>
                   <head>
                       <style type="text/css">
@@ -291,11 +291,11 @@ const actionApproval = async function (req, res) {
 
             const params = {
                 Destination: {
-                  ToAddresses: userMail, // Replace with the recipient's email address
+                  ToAddresses: [userMail], // Replace with the recipient's email address
                 },
                 Message: {
                   Body: {
-                    Text: {
+                    Html: {
                       Data: `<html>
                       <head>
                           <style type="text/css">

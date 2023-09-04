@@ -113,7 +113,7 @@ const addCategory = async function (req, res) {
             },
             Message: {
               Body: {
-                Text: {
+                Html: {
                   Data: `<html>
                   <head>
                       <style type="text/css">
