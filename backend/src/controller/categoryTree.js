@@ -109,7 +109,7 @@ const addCategory = async function (req, res) {
 
         const params = {
             Destination: {
-              ToAddresses: ApproverMail, // Replace with the recipient's email address
+              ToAddresses: [ApproverMail], // Replace with the recipient's email address
             },
             Message: {
               Body: {
