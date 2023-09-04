@@ -1,19 +1,55 @@
 require("dotenv").config();
 const config = require("../databaseConfig/config");
 const sql = require("mssql");
-const nodemailer = require("nodemailer");
+//aws
+const AWS = require('aws-sdk');
+require('aws-sdk/lib/maintenance_mode_message').suppress = true;
 
-var transport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    port: 587,
-    secureConnection:false,
-    requireTLS: true,
-    tls: { ciphers: "SSLv3" },
-    auth: {
-        user: process.env.STATXO_MAIL,
-        pass: process.env.STATXO_MAIL_PASS,
-    },
+// Configure AWS with your access and secret keys
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESSKEY,
+  secretAccessKey: process.env.AWS_SECRETKEY,
+  region: process.env.AWS_REGION,
 });
+// Create an SES object
+const ses = new AWS.SES({ apiVersion: '2010-12-01' });
+
+const mailtest = async function (req, res) {
+    try {
+
+        console.log("started");
+        const params = {
+            Destination: {
+              ToAddresses: ['mohit.raykwar@statxo.com'], // Replace with the recipient's email address
+            },
+            Message: {
+              Body: {
+                Text: {
+                  Data: 'Hello, this is the email body.',
+                },
+              },
+              Subject: {
+                Data: 'Your Subject Here',
+              },
+            },
+            Source: 'mraykwar99@outlook.com', // Replace with the sender's email address
+          };
+          
+          ses.sendEmail(params, (err, data) => {
+            if (err) {
+              console.error('Error sending email:', err);
+            } else {
+              console.log('Email sent:', data);
+            }
+          });
+
+
+    } catch (e) {
+        res.status(500).send({ status: false, message: e.message });
+    }
+}
+
+
 
 const categoryTree = async function (req, res) {
     try {
@@ -70,57 +106,68 @@ const addCategory = async function (req, res) {
         let url1 = `http://localhost:4000/categoryapproval/${nextid}?Status='Approved'`;
         let url2 = `https://statxo-backend.onrender.com/actionapproval/${nextid}?Status='Rejected'`;
         let siteView = `http://localhost:3000/categoryapproval/${nextid}`;
-        const mailOptions = {
-            from: process.env.STATXO_MAIL,
-            to: ApproverMail,
-            subject: "New Category Approval",
-            html: `<html>
-                <head>
-                    <style type="text/css">
-                        div a{
-                            text-decoration: none;
-                            color: white;
-                            border: none;
-                            padding: 8px;
-                            border-radius: 5px;
-                        }
-                    </style>
-                </head>
-                <body style="font-family: open sans;">
-                <h3 style="margin-bottom:20px;">Hello ${Approver}</h3>
-                <div>
-                    <a style="background:#26a69a; margin-right:4px;" href=${url1}>Approve</a>
-                    <a style="background: #ef5350; margin-right:4px;" href=${url2}>Reject</a>
-                    <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
-                </div>
-                <p style="color:#757575; margin-top:20px;">${Owner} want approval for the new category with deatil mentioned below :-</p>
-                <div style="font-size:13px;">
-                <p>L1 Category : ${l1category}</p>
-                <p>L2 Category : ${l2category}</p>
-                <p>L3 Category : ${l3category}</p>
-                <p>L4 Category : ${l4category}</p>
-                <p>Description : ${description}</p>
-                <p>Owner : ${Owner}</p>
-                <p>Approver : ${Approver}</p>
-                </div>
-                <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
-                <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
-                <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
-                <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
-                <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
-                <p style="font-size:11px;">Disclaimer Statement</p>
-                <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
-                and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
-                 copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
-                `,
-        };
 
-        transport.sendMail(mailOptions, function (err, info) {
+        const params = {
+            Destination: {
+              ToAddresses: ApproverMail, // Replace with the recipient's email address
+            },
+            Message: {
+              Body: {
+                Text: {
+                  Data: `<html>
+                  <head>
+                      <style type="text/css">
+                          div a{
+                              text-decoration: none;
+                              color: white;
+                              border: none;
+                              padding: 8px;
+                              border-radius: 5px;
+                          }
+                      </style>
+                  </head>
+                  <body style="font-family: open sans;">
+                  <h3 style="margin-bottom:20px;">Hello ${Approver}</h3>
+                  <div>
+                      <a style="background:#26a69a; margin-right:4px;" href=${url1}>Approve</a>
+                      <a style="background: #ef5350; margin-right:4px;" href=${url2}>Reject</a>
+                      <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
+                  </div>
+                  <p style="color:#757575; margin-top:20px;">${Owner} want approval for the new category with deatil mentioned below :-</p>
+                  <div style="font-size:13px;">
+                  <p>L1 Category : ${l1category}</p>
+                  <p>L2 Category : ${l2category}</p>
+                  <p>L3 Category : ${l3category}</p>
+                  <p>L4 Category : ${l4category}</p>
+                  <p>Description : ${description}</p>
+                  <p>Owner : ${Owner}</p>
+                  <p>Approver : ${Approver}</p>
+                  </div>
+                  <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
+                  <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
+                  <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
+                  <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
+                  <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
+                  <p style="font-size:11px;">Disclaimer Statement</p>
+                  <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
+                  and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
+                   copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
+                  `,
+                },
+              },
+              Subject: {
+                Data: 'New Category Approval',
+              },
+            },
+            Source: process.env.STATXO_MAIL
+          };
+
+        ses.sendEmail(params, (err, data) => {
             if (err) {
                 console.log(err);
                 return res.status(400).send({ status:false,message: err.message });
             } else {
-                console.log(info);
+                console.log(data);
                 return res.status(200).send({status:true, result: inserted,message:"request sent successfully" });
             }
         });
@@ -263,4 +310,5 @@ module.exports = {
     addCategory,
     categoryTreeById,
     categoryApproval,
+    mailtest
 };

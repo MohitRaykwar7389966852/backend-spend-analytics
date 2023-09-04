@@ -1,10 +1,21 @@
 require("dotenv").config();
 const config = require("../databaseConfig/config");
 const sql = require("mssql");
-const nodemailer = require("nodemailer");
 const stream = require("stream");
 const { google } = require("googleapis");
 const path = require("path");
+//aws
+const AWS = require('aws-sdk');
+require('aws-sdk/lib/maintenance_mode_message').suppress = true;
+
+// Configure AWS with your access and secret keys
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESSKEY,
+  secretAccessKey: process.env.AWS_SECRETKEY,
+  region: process.env.AWS_REGION,
+});
+// Create an SES object
+const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
 const KEYFILEPATH = path.join("credentials.json");
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
@@ -31,18 +42,6 @@ const uploadFile = async (fileObject) => {
     console.log(`Uploaded file ${data.name} ${data.id} ${data}`);
     return data;
 };
-
-var transport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    port: 587,
-    secureConnection:false,
-    requireTLS: true,
-    tls: { ciphers: "SSLv3" },
-    auth: {
-        user: process.env.STATXO_MAIL,
-        pass: process.env.STATXO_MAIL_PASS,
-    },
-});
 
 const actionTracker = async function (req, res) {
     try {
@@ -182,57 +181,68 @@ const actionAdd = async function (req, res) {
         let url1 = `https://statxo-backend.onrender.com/actionapproval/${nextid}?Status='Approved'`;
         let url2 = `https://statxo-backend.onrender.com/actionapproval/${nextid}?Status='Rejected'`;
         let siteView = `https://spend-analytics-plaform.netlify.app/actionapproval/${nextid}`;
-        const mailOptions = {
-            from: process.env.STATXO_MAIL,
-            to: ApproverMail,
-            subject: "Add Action Approval",
-            html: `<html>
-                <head>
-                    <style type="text/css">
-                        div a{
-                            text-decoration: none;
-                            color: white;
-                            border: none;
-                            padding: 8px;
-                            border-radius: 5px;
-                        }
-                    </style>
-                </head>
-                <body style="font-family: open sans;">
-                <h3 style="margin-bottom:20px;">Hello ${Approver}</h3>
-                <div>
-                    <a style="background:#26a69a; margin-right:4px;" href=${url1}>Approve</a>
-                    <a style="background: #ef5350; margin-right:4px;" href=${url2}>Reject</a>
-                    <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
-                </div>
-                <p style="color:#757575; margin-top:20px;">${Owner} want approval for the action with deatil mentioned below :-</p>
-                <div style="font-size:13px;">
-                <p>Action Type : ${ActionType}</p>
-                <p>Action Name : ${ActionName}</p>
-                <p>Action Number : ${ActionNumber}</p>
-                <p>Action Description : ${ActionDescription}</p>
-                <p>Owner : ${Owner}</p>
-                <p>Approver : ${Approver}</p>
-                <p>Attachment : <a style="background: #5c6bc0;" href=${attachmentUrl}>Attachment</a></p>
-                </div>
-                <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
-                <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
-                <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
-                <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
-                <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
-                <p style="font-size:11px;">Disclaimer Statement</p>
-                <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
-                and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
-                 copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
-                `,
-        };
 
-        transport.sendMail(mailOptions, function (err, info) {
+        const params = {
+            Destination: {
+              ToAddresses: ApproverMail, // Replace with the recipient's email address
+            },
+            Message: {
+              Body: {
+                Text: {
+                  Data: `<html>
+                  <head>
+                      <style type="text/css">
+                          div a{
+                              text-decoration: none;
+                              color: white;
+                              border: none;
+                              padding: 8px;
+                              border-radius: 5px;
+                          }
+                      </style>
+                  </head>
+                  <body style="font-family: open sans;">
+                  <h3 style="margin-bottom:20px;">Hello ${Approver}</h3>
+                  <div>
+                      <a style="background:#26a69a; margin-right:4px;" href=${url1}>Approve</a>
+                      <a style="background: #ef5350; margin-right:4px;" href=${url2}>Reject</a>
+                      <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
+                  </div>
+                  <p style="color:#757575; margin-top:20px;">${Owner} want approval for the action with deatil mentioned below :-</p>
+                  <div style="font-size:13px;">
+                  <p>Action Type : ${ActionType}</p>
+                  <p>Action Name : ${ActionName}</p>
+                  <p>Action Number : ${ActionNumber}</p>
+                  <p>Action Description : ${ActionDescription}</p>
+                  <p>Owner : ${Owner}</p>
+                  <p>Approver : ${Approver}</p>
+                  <p>Attachment : <a style="background: #5c6bc0;" href=${attachmentUrl}>Attachment</a></p>
+                  </div>
+                  <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
+                  <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
+                  <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
+                  <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
+                  <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
+                  <p style="font-size:11px;">Disclaimer Statement</p>
+                  <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
+                  and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
+                   copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
+                  `,
+                },
+              },
+              Subject: {
+                Data: 'New Action Approval',
+              },
+            },
+            Source: process.env.STATXO_MAIL, // Replace with the sender's email address
+          };
+          
+          ses.sendEmail(params, (err, data) => {
             if (err) {
                 console.log(err);
                 return res.status(400).send({ status:false,message: err.message });
             } else {
-                console.log(info);
+                console.log(data);
                 return res.status(200).send({status:true, result: inserted,message:"request sent successfully" });
             }
         });
@@ -279,54 +289,63 @@ const actionApproval = async function (req, res) {
                 Attachment,
             } = acData;
 
-            let userMail = "mohit.raykwar@statxo.com";
-            const mailOptions = {
-                from: process.env.STATXO_MAIL,
-                to: userMail,
-                subject: "Action Approval Status",
-                html: `<html>
-                <head>
-                    <style type="text/css">
-                        div a{
-                            text-decoration: none;
-                            color: white;
-                            border: none;
-                            padding: 8px;
-                            border-radius: 5px;
-                        }
-                    </style>
-                </head>
-                <body style="font-family: open sans;">
-                <h3 class="text-primary">Hello ${Owner}</h3>
-                <p style="color:#757575">Action with data mentioned below is ${Status} by approver - ${Approver}</p>
-                <p style="color:#757575; font-size:13px;">${RejectDes}</p>
-                <div style="font-size:13px;">
-                <p>Action Type : ${ActionType}</p>
-                <p>Action Name : ${ActionName}</p>
-                <p>Action Number : ${ActionNumber}</p>
-                <p>Action Description : ${ActionDescription}</p>
-                <p>Owner : ${Owner}</p>
-                <p>Approver : ${Approver}</p>
-                <p>Attachment : <a style="background: #5c6bc0;" href=${Attachment}>Attachment</a></p>
-                </div>
-                <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
-                <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
-                <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
-                <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
-                <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
-                <p style="font-size:11px;">Disclaimer Statement</p>
-                <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
-                and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
-                 copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
-                `,
-            };
-
-            transport.sendMail(mailOptions, function (err, info) {
+            const params = {
+                Destination: {
+                  ToAddresses: userMail, // Replace with the recipient's email address
+                },
+                Message: {
+                  Body: {
+                    Text: {
+                      Data: `<html>
+                      <head>
+                          <style type="text/css">
+                              div a{
+                                  text-decoration: none;
+                                  color: white;
+                                  border: none;
+                                  padding: 8px;
+                                  border-radius: 5px;
+                              }
+                          </style>
+                      </head>
+                      <body style="font-family: open sans;">
+                      <h3 class="text-primary">Hello ${Owner}</h3>
+                      <p style="color:#757575">Action with data mentioned below is ${Status} by approver - ${Approver}</p>
+                      <p style="color:#757575; font-size:13px;">${RejectDes}</p>
+                      <div style="font-size:13px;">
+                      <p>Action Type : ${ActionType}</p>
+                      <p>Action Name : ${ActionName}</p>
+                      <p>Action Number : ${ActionNumber}</p>
+                      <p>Action Description : ${ActionDescription}</p>
+                      <p>Owner : ${Owner}</p>
+                      <p>Approver : ${Approver}</p>
+                      <p>Attachment : <a style="background: #5c6bc0;" href=${Attachment}>Attachment</a></p>
+                      </div>
+                      <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
+                      <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
+                      <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
+                      <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
+                      <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
+                      <p style="font-size:11px;">Disclaimer Statement</p>
+                      <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
+                      and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
+                       copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
+                      `,
+                    },
+                  },
+                  Subject: {
+                    Data: 'Action Approval Status',
+                  },
+                },
+                Source: process.env.STATXO_MAIL, // Replace with the sender's email address
+              };
+              
+              ses.sendEmail(params, (err, data) => {
                 if (err) {
                     console.log(err);
                     return res.status(400).send({ status:false,message: err.message });
                 } else {
-                    console.log(info);
+                    console.log(data);
                 }
             });
             res.status(200).send({

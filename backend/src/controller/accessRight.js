@@ -4,7 +4,6 @@ const sql = require("mssql");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const nodemailer = require("nodemailer");
 
 function generateRandomPassword(length) {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -17,18 +16,6 @@ function generateRandomPassword(length) {
   
     return password;
   }
-
-  var transport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    port: 587,
-    secureConnection:false,
-    requireTLS: true,
-    tls: { ciphers: "SSLv3" },
-    auth: {
-        user: process.env.STATXO_MAIL,
-        pass: process.env.STATXO_MAIL_PASS,
-    },
-});
 
 const brandList = async function (req, res) {
     try {

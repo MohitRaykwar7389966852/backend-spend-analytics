@@ -4,21 +4,18 @@ const sql = require("mssql");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
-const nodemailer = require("nodemailer");
+//aws
+const AWS = require('aws-sdk');
+require('aws-sdk/lib/maintenance_mode_message').suppress = true;
 
-console.log(config);
-
-var transport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    port: 587,
-    secureConnection:false,
-    requireTLS: true,
-    tls: { ciphers: "SSLv3" },
-    auth: {
-        user: process.env.STATXO_MAIL,
-        pass: process.env.STATXO_MAIL_PASS,
-    },
+// Configure AWS with your access and secret keys
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESSKEY,
+  secretAccessKey: process.env.AWS_SECRETKEY,
+  region: process.env.AWS_REGION,
 });
+// Create an SES object
+const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
 const signup = async function (req, res) {
     try {
@@ -121,43 +118,54 @@ const resetPass = async function (req, res) {
         console.log("disconnected");
 
         let otp = Math.floor(Math.random()*899999+100000);
-        const mailOptions = {
-            from: process.env.STATXO_MAIL,
-            to: email,
-            subject: "OTP For Password Reset",
-            html: `<html>
-                <head>
-                    <style type="text/css">
-                        div a{
-                            text-decoration: none;
-                            color: white;
-                            border: none;
-                            padding: 8px;
-                            border-radius: 5px;
-                        }
-                    </style>
-                </head>
-                <body style="font-family: open sans;">
-                <h3 style="margin-bottom:20px;">Hello User</h3>
-                <p style="color:#757575; margin-top:20px;">Here is the OTP to reset your password - ${otp}</p>
-                <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
-                <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
-                <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
-                <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
-                <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
-                <p style="font-size:11px;">Disclaimer Statement</p>
-                <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
-                and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
-                 copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
-                `,
-        };
 
-        transport.sendMail(mailOptions, function (err, info) {
+        const params = {
+            Destination: {
+              ToAddresses: email, // Replace with the recipient's email address
+            },
+            Message: {
+              Body: {
+                Text: {
+                  Data: `<html>
+                  <head>
+                      <style type="text/css">
+                          div a{
+                              text-decoration: none;
+                              color: white;
+                              border: none;
+                              padding: 8px;
+                              border-radius: 5px;
+                          }
+                      </style>
+                  </head>
+                  <body style="font-family: open sans;">
+                  <h3 style="margin-bottom:20px;">Hello User</h3>
+                  <p style="color:#757575; margin-top:20px;">Here is the OTP to reset your password - ${otp}</p>
+                  <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
+                  <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
+                  <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
+                  <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
+                  <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
+                  <p style="font-size:11px;">Disclaimer Statement</p>
+                  <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
+                  and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
+                   copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
+                  `,
+                },
+              },
+              Subject: {
+                Data: 'OTP For Password Reset',
+              },
+            },
+            Source: process.env.STATXO_MAIL
+          };
+
+        ses.sendEmail(params, (err, data) => {
             if (err) {
                 console.log(err);
                 return res.status(400).send({status:false, message:err.message });
             } else {
-                console.log(info);
+                console.log(data);
                 return res.status(200).send({status:true,result:{otp:otp,id:data[0]["Id"]}, message:"otp sent successfully" });
             }
         });

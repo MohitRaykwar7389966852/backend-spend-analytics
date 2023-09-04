@@ -1,13 +1,24 @@
 require("dotenv").config();
 const config = require("../databaseConfig/config");
 const sql = require("mssql");
-const nodemailer = require("nodemailer");
 const stream = require("stream");
 const { google } = require("googleapis");
 const path = require("path");
 const { admin } = require("googleapis/build/src/apis/admin");
-// const axios = require("axios");
+//aws
+const AWS = require('aws-sdk');
+require('aws-sdk/lib/maintenance_mode_message').suppress = true;
 
+// Configure AWS with your access and secret keys
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESSKEY,
+  secretAccessKey: process.env.AWS_SECRETKEY,
+  region: process.env.AWS_REGION,
+});
+// Create an SES object
+const ses = new AWS.SES({ apiVersion: '2010-12-01' });
+
+//google drive
 const KEYFILEPATH = path.join("credentials.json");
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
 
@@ -35,18 +46,6 @@ const uploadFile = async (fileObject) => {
     console.log(`Uploaded file ${data.name} ${data.id} ${data}`);
     return data;
 };
-
-var transport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    port: 587,
-    secureConnection:false,
-    requireTLS: true,
-    tls: { ciphers: "SSLv3" },
-    auth: {
-        user: process.env.STATXO_MAIL,
-        pass: process.env.STATXO_MAIL_PASS,
-    },
-});
 
 const helpDesk = async function (req, res) {
     try {
@@ -79,54 +78,65 @@ const helpDesk = async function (req, res) {
         poolConnection.close();
         console.log("disconnected");
         let siteView = `http://localhost:3000/help-response/${id}`;
-        const mailOptions = {
-            from: process.env.STATXO_MAIL,
-            to: process.env.ADMIN_MAIL,
-            subject: "Help Desk Query",
-            html: `<html>
-                <head>
-                    <style type="text/css">
-                        div a{
-                            text-decoration: none;
-                            color: white;
-                            border: none;
-                            padding: 8px;
-                            border-radius: 5px;
-                        }
-                    </style>
-                </head>
-                <body style="font-family: open sans;">
-                <h3 class="text-primary">Hello Admin</h3>
-                <p style="color:#757575">User Send A Help Request</p>
-                <div>
-                    <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
-                </div>
-                <div style="font-size:13px;">
-                <p>Title : ${title}</p>
-                <p>Comment : ${comment}</p>
-                <p>Date : ${date}</p>
-                <p>Priority : ${priority}</p>
-                <p>Section : ${section}</p>
-                <p>Attachment : <a style="background: #5c6bc0;" href=${fileUrl}>Attachment</a></p>
-                </div>
-                <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
-                <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
-                <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
-                <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
-                <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
-                <p style="font-size:11px;">Disclaimer Statement</p>
-                <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
-                and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
-                 copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
-                `,
-        };
 
-        transport.sendMail(mailOptions, function (err, info) {
+        const params = {
+            Destination: {
+              ToAddresses: process.env.ADMIN_MAIL, // Replace with the recipient's email address
+            },
+            Message: {
+              Body: {
+                Text: {
+                  Data: `<html>
+                  <head>
+                      <style type="text/css">
+                          div a{
+                              text-decoration: none;
+                              color: white;
+                              border: none;
+                              padding: 8px;
+                              border-radius: 5px;
+                          }
+                      </style>
+                  </head>
+                  <body style="font-family: open sans;">
+                  <h3 class="text-primary">Hello Admin</h3>
+                  <p style="color:#757575">User Send A Help Request</p>
+                  <div>
+                      <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
+                  </div>
+                  <div style="font-size:13px;">
+                  <p>Title : ${title}</p>
+                  <p>Comment : ${comment}</p>
+                  <p>Date : ${date}</p>
+                  <p>Priority : ${priority}</p>
+                  <p>Section : ${section}</p>
+                  <p>Attachment : <a style="background: #5c6bc0;" href=${fileUrl}>Attachment</a></p>
+                  </div>
+                  <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
+                  <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
+                  <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
+                  <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
+                  <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
+                  <p style="font-size:11px;">Disclaimer Statement</p>
+                  <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
+                  and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
+                   copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
+                  `,
+                },
+              },
+              Subject: {
+                Data: 'Help Desk Query',
+              },
+            },
+            Source: process.env.STATXO_MAIL, // Replace with the sender's email address
+          };
+          
+          ses.sendEmail(params, (err, data) => {
             if (err) {
                 console.log(err);
                 return res.status(400).send({ status:false,message: err.message });
             } else {
-                console.log(info);
+                console.log(data);
                 return res.status(200).send({ status:true,message: "Request sent successfully" });
             }
         });
@@ -213,53 +223,64 @@ const helpResponse = async function (req, res) {
             console.log(qData);
 
             let userMail = Email;
-            const mailOptions = {
-                from: process.env.STATXO_MAIL,
-                to: userMail,
-                subject: "Help Desk Response",
-                html: `<html>
-                <head>
-                    <style type="text/css">
-                        div a{
-                            text-decoration: none;
-                            color: white;
-                            border: none;
-                            padding: 8px;
-                            border-radius: 5px;
-                        }
-                    </style>
-                </head>
-                <body style="font-family: open sans;">
-                <h3 class="text-primary">Hello Admin</h3>
-                <p style="color:#757575">Help Request with data mentioned below is ${Status}</p>
-                <div style="font-size:13px;">
-                <p>Title : ${Title}</p>
-                <p>Section : ${Section}</p>
-                <p>Priority : ${Priority}</p>
-                <p>Date : ${Date}</p>
-                <p>Status : ${Status}</p>
-                <p>Comment : ${Comment}</p>
-                <p>Attachment : <a style="background: #5c6bc0;" href=${Attachment}>Attachment</a></p>
-                <p>Admin Response : ${Admin_Comment}</p>
-                </div>
-                <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
-                <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
-                <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
-                <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
-                <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
-                <p style="font-size:11px;">Disclaimer Statement</p>
-                <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
-                and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
-                 copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
-                `,
-            };
 
-            transport.sendMail(mailOptions, function (err, info) {
+            const params = {
+                Destination: {
+                  ToAddresses: userMail, // Replace with the recipient's email address
+                },
+                Message: {
+                  Body: {
+                    Text: {
+                      Data: `<html>
+                      <head>
+                          <style type="text/css">
+                              div a{
+                                  text-decoration: none;
+                                  color: white;
+                                  border: none;
+                                  padding: 8px;
+                                  border-radius: 5px;
+                              }
+                          </style>
+                      </head>
+                      <body style="font-family: open sans;">
+                      <h3 class="text-primary">Hello Admin</h3>
+                      <p style="color:#757575">Help Request with data mentioned below is ${Status}</p>
+                      <div style="font-size:13px;">
+                      <p>Title : ${Title}</p>
+                      <p>Section : ${Section}</p>
+                      <p>Priority : ${Priority}</p>
+                      <p>Date : ${Date}</p>
+                      <p>Status : ${Status}</p>
+                      <p>Comment : ${Comment}</p>
+                      <p>Attachment : <a style="background: #5c6bc0;" href=${Attachment}>Attachment</a></p>
+                      <p>Admin Response : ${Admin_Comment}</p>
+                      </div>
+                      <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
+                      <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>
+                      <p style="color:#757575; font-size:14px;">Website :- <a style="color:blue; text-decoration:underline;" href="https://www.statxo.com/">www.statxo.com</a></p>
+                      <p style="color:#757575; font-size:14px;">Number :- XXXXXXXXXX</p>
+                      <p style="color:#C2185B; font-size:13px;  margin-bottom:10px;">New Delhi | Bengaluru | Romania | US</p>
+                      <p style="font-size:11px;">Disclaimer Statement</p>
+                      <p style="font-size:13px;">This message may also contain any attachments if included will contain purely confidential information intended for a specific individual 
+                      and purpose, and is protected by law. If you are not the intended recipient of this message, you are requested to delete this message and are hereby notified that any disclosure,
+                       copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</p>
+                      `,
+                    },
+                  },
+                  Subject: {
+                    Data: 'Help Desk Response',
+                  },
+                },
+                Source: process.env.STATXO_MAIL, // Replace with the sender's email address
+              };
+              
+              ses.sendEmail(params, (err, data) => {
                 if (err) {
                     console.log(err);
                     return res.status(400).send({ status:false,message: err.message });
                 } else {
-                    console.log(info);
+                    console.log(data);
                 }
             });
             res.status(200).send({

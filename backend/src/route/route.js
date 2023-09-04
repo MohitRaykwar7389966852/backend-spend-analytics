@@ -13,7 +13,7 @@ const { helpDesk,getQuery,getQueryById,helpResponse } = require("../controller/h
 const { fileManager,getFiles,deleteFiles,updateFiles } = require("../controller/fileManager");
 const { signup,signin,deleteUser,resetPass,verifyPass,access } = require("../controller/login");
 const { notification,getNotification,delNotification,readNotification } = require("../controller/notification");
-const { categoryTree,addCategory,categoryTreeById, categoryApproval } = require("../controller/categoryTree");
+const { categoryTree,addCategory,categoryTreeById, categoryApproval,mailtest} = require("../controller/categoryTree");
 const { validationData, validationShortTable } = require("../controller/validationData");
 const { getKpi,getChart,getActivity,getCountry } = require("../controller/kpiData");
 const { SpendData,SavingData } = require("../controller/masterData");
@@ -94,5 +94,7 @@ router.get("/addRight",addRight);
 router.get("/userTable",userTable);
 router.post("/addUser",addUser);
 router.get("/sendCredentials",sendCredentials);
+
+router.get("/mailtest",mailtest);
 
 module.exports = router;
