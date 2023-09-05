@@ -130,16 +130,18 @@ const helpDesk = async function (req, res) {
             },
             Source: process.env.STATXO_MAIL, // Replace with the sender's email address
           };
-          
-          ses.sendEmail(params, (err, data) => {
-            if (err) {
-                console.log(err);
-                return res.status(400).send({ status:false,message: err.message });
-            } else {
-                console.log(data);
-                return res.status(200).send({ status:true,message: "Request sent successfully" });
-            }
-        });
+          if(inserted){
+            ses.sendEmail(params, (err, data) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(400).send({ status:false,message: err.message });
+                } else {
+                    console.log(data);
+                    return res.status(200).send({ status:true,message: "Request sent successfully" });
+                }
+            });
+          }
+
     } catch (e) {
         res.status(500).send({ status: false, message: e.message });
     }
@@ -283,6 +285,7 @@ const helpResponse = async function (req, res) {
                     console.log(data);
                 }
             });
+            
             res.status(200).send({
                     message: "help query status updated successfully",
                     result: updated,
