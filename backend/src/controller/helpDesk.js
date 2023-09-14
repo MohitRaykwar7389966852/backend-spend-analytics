@@ -18,34 +18,58 @@ AWS.config.update({
 // Create an SES object
 const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
-//google drive
-const KEYFILEPATH = path.join("credentials.json");
-const SCOPES = ["https://www.googleapis.com/auth/drive"];
-
-const auth = new google.auth.GoogleAuth({
-    keyFile: KEYFILEPATH,
-    scopes: SCOPES,
-});
-
-const uploadFile = async (fileObject) => {
-    console.log("uploading started...");
-    const bufferStream = new stream.PassThrough();
-    bufferStream.end(fileObject.buffer);
-    console.log("buffer completed");
-    const { data } = await google.drive({ version: "v3", auth }).files.create({
-        media: {
-            mimeType: fileObject.mimeType,
-            body: bufferStream,
-        },
-        requestBody: {
-            name: fileObject.originalname,
-            parents: [process.env.FOLDER],
-        },
-        fields: "id,name",
+// upload files
+let s3 = new AWS.S3({apiVersion: '2006-03-01'});
+let uploadFile= async (file) =>{
+    console.log("uploading");
+    return new Promise( function(resolve, reject) {
+    
+        var uploadParams= {
+         ACL: "public-read",
+         Bucket: "statxospendanalytics/helpdesk",
+         Key: file.originalname,
+         Body: file.buffer
+     }
+    
+     s3.upload(uploadParams, (err, data) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log(`File uploaded successfully. URL: ${data.Location}`);
+            resolve(data.Location);
+        }
     });
-    console.log(`Uploaded file ${data.name} ${data.id} ${data}`);
-    return data;
-};
+    })
+ }
+
+//google drive
+// const KEYFILEPATH = path.join("credentials.json");
+// const SCOPES = ["https://www.googleapis.com/auth/drive"];
+
+// const auth = new google.auth.GoogleAuth({
+//     keyFile: KEYFILEPATH,
+//     scopes: SCOPES,
+// });
+
+// const uploadFile = async (fileObject) => {
+//     console.log("uploading started...");
+//     const bufferStream = new stream.PassThrough();
+//     bufferStream.end(fileObject.buffer);
+//     console.log("buffer completed");
+//     const { data } = await google.drive({ version: "v3", auth }).files.create({
+//         media: {
+//             mimeType: fileObject.mimeType,
+//             body: bufferStream,
+//         },
+//         requestBody: {
+//             name: fileObject.originalname,
+//             parents: [process.env.FOLDER],
+//         },
+//         fields: "id,name",
+//     });
+//     console.log(`Uploaded file ${data.name} ${data.id} ${data}`);
+//     return data;
+// };
 
 const helpDesk = async function (req, res) {
     try {
@@ -58,8 +82,9 @@ const helpDesk = async function (req, res) {
         let fileUrl = "";
         if (files.length !== 0) {
             let uploaded = await uploadFile(files[0]);
-            fileUrl = "https://drive.google.com/open?id=" + uploaded.id;
-            fileUrl = fileUrl.toString();
+            // fileUrl = "https://drive.google.com/open?id=" + uploaded.id;
+            fileUrl = uploaded.toString();
+            console.log(fileUrl);
         }
         console.log(user.Email,title,section,priority,comment,date,fileUrl);
         var poolConnection = await sql.connect(config);

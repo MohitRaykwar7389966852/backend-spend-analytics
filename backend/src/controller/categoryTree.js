@@ -14,35 +14,68 @@ AWS.config.update({
 // Create an SES object
 const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
+//aws config for s3
+// AWS.config.update({
+//     accessKeyId: 'AKIAXWODID4Z2HPJEB6D',
+//     secretAccessKey: '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',
+//     region: 'eu-north-1',
+//   });
+  let s3 = new AWS.S3({apiVersion: '2006-03-01'});
+
+  let uploadFile= async (file) =>{
+    console.log("uploading");
+    return new Promise( function(resolve, reject) {
+    
+        var uploadParams= {
+         ACL: "public-read",
+         Bucket: "statxospendanalytics/demo",
+         Key: file.originalname,
+         Body: file.buffer
+     }
+    
+     s3.upload(uploadParams, (err, data) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log(`File uploaded successfully. URL: ${data.Location}`);
+        }
+    });
+
+    })
+ }
+
 const mailtest = async function (req, res) {
     try {
 
-        console.log("started");
-        const params = {
-            Destination: {
-              ToAddresses: ['mohit.raykwar@statxo.com'], // Replace with the recipient's email address
-            },
-            Message: {
-              Body: {
-                Text: {
-                  Data: 'Hello, this is the email body.',
-                },
-              },
-              Subject: {
-                Data: 'Your Subject Here',
-              },
-            },
-            Source: 'mraykwar99@outlook.com', // Replace with the sender's email address
-          };
+        // console.log("started");
+        // const params = {
+        //     Destination: {
+        //       ToAddresses: ['mohit.raykwar@statxo.com'], // Replace with the recipient's email address
+        //     },
+        //     Message: {
+        //       Body: {
+        //         Text: {
+        //           Data: 'Hello, this is the email body.',
+        //         },
+        //       },
+        //       Subject: {
+        //         Data: 'Your Subject Here',
+        //       },
+        //     },
+        //     Source: 'mraykwar99@outlook.com', // Replace with the sender's email address
+        //   };
           
-          ses.sendEmail(params, (err, data) => {
-            if (err) {
-              console.error('Error sending email:', err);
-            } else {
-              console.log('Email sent:', data);
-            }
-          });
-
+        //   ses.sendEmail(params, (err, data) => {
+        //     if (err) {
+        //       console.error('Error sending email:', err);
+        //     } else {
+        //       console.log('Email sent:', data);
+        //     }
+        //   });
+        let files = req.files;
+        let Image = files[0];
+        let imageUrl = await uploadFile(Image);
+        console.log(imageUrl);
 
     } catch (e) {
         res.status(500).send({ status: false, message: e.message });
