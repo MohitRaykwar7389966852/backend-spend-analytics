@@ -14,12 +14,6 @@ AWS.config.update({
 // Create an SES object
 const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
-//aws config for s3
-// AWS.config.update({
-//     accessKeyId: 'AKIAXWODID4Z2HPJEB6D',
-//     secretAccessKey: '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',
-//     region: 'eu-north-1',
-//   });
   let s3 = new AWS.S3({apiVersion: '2006-03-01'});
 
   let uploadFile= async (file) =>{
