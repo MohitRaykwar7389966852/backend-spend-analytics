@@ -14,28 +14,22 @@ const getKpi = async function (req, res) {
         console.log("connected");
         let data = [];
 
-        //spend
-        let sp = await poolConnection.request().query(`SELECT SUM(AmountEUR),COUNT(DISTINCT CompanyName),COUNT(DISTINCT Supplier_Key),COUNT(CompanyName),COUNT(DISTINCT ReportingLevel4),MAX(YearMonth),MIN(YearMonth),COUNT(DISTINCT Entity_Country)
-        FROM [DevOps].[SpendData] ${spendinClause}`);
-        
-        // saving
-        let sv = await poolConnection.request().query(`SELECT SUM(CALC_AmountEUR_YTD_TY),COUNT(DISTINCT CompanyPrimaryCluster),SUM(CALC_PriceVariance_YTD),MAX(YearMonth),MIN(YearMonth),COUNT(DISTINCT Entity_RegionP)
-        FROM [DevOps].[SavingData_2] ${savinginClause}`);
+        let [sp, sv, ac , ac2 , help , lasthelp] = await Promise.all([
+            poolConnection.request().query(`SELECT SUM(AmountEUR),COUNT(DISTINCT CompanyName),COUNT(DISTINCT Supplier_Key),COUNT(CompanyName),COUNT(DISTINCT ReportingLevel4),MAX(YearMonth),MIN(YearMonth),COUNT(DISTINCT Entity_Country)
+            FROM [DevOps].[SpendData] ${spendinClause}`),
+            poolConnection.request().query(`SELECT SUM(CALC_AmountEUR_YTD_TY),COUNT(DISTINCT CompanyPrimaryCluster),SUM(CALC_PriceVariance_YTD),MAX(YearMonth),MIN(YearMonth),COUNT(DISTINCT Entity_RegionP)
+            FROM [DevOps].[SavingData_2] ${savinginClause}`),
+            poolConnection.request().query(`SELECT SUM(AmountEUR),COUNT(DISTINCT CompanyName),COUNT(DISTINCT VendorNameHarmonized),MAX(YearMonth),MIN(YearMonth),COUNT(DISTINCT ActionName),COUNT(DISTINCT Entity_Country),COUNT(case when Status = 'Pending' then 1 else null end)
+            FROM [DevOps].[ActionTracking_test] ${actioninClause}`),
+            poolConnection.request().query(`SELECT SUM([AmountEUR(Pre)]),SUM([AmountEUR(Post)])
+            FROM [DevOps].[ActionTracking_test_upd]`),
+            poolConnection.request().query(`SELECT COUNT(Status),COUNT(case when Status = 'Pending' then 1 else null end),COUNT(case when Status = 'In Progress' then 1 else null end),COUNT(case when Status = 'Rejected' then 1 else null end),COUNT(case when Status = 'Successfull' then 1 else null end)
+            FROM [DevOps].[Help_Desk_Table] WHERE Email = '${user.Email}'`),
+            poolConnection.request().query(`SELECT Date
+            FROM [DevOps].[Help_Desk_Table] WHERE Email = '${user.Email}'`)
+        ]);
 
-        // //action
-        let ac = await poolConnection.request().query(`SELECT SUM(AmountEUR),COUNT(DISTINCT CompanyName),COUNT(DISTINCT VendorNameHarmonized),MAX(YearMonth),MIN(YearMonth),COUNT(DISTINCT ActionName),COUNT(DISTINCT Entity_Country),COUNT(case when Status = 'Pending' then 1 else null end)
-        FROM [DevOps].[ActionTracking_test] ${actioninClause}`);
-
-        let ac2 = await poolConnection.request().query(`SELECT SUM([AmountEUR(Pre)]),SUM([AmountEUR(Post)])
-        FROM [DevOps].[ActionTracking_test_upd]`);
-        ac2 = ac2.recordsets[0][0][""][1] - ac2.recordsets[0][0][""][0]; //need RLS
-
-        //help
-        var help = await poolConnection.request().query(`SELECT COUNT(Status),COUNT(case when Status = 'Pending' then 1 else null end),COUNT(case when Status = 'In Progress' then 1 else null end),COUNT(case when Status = 'Rejected' then 1 else null end),COUNT(case when Status = 'Successfull' then 1 else null end)
-        FROM [DevOps].[Help_Desk_Table] WHERE Email = '${user.Email}'`);
-
-        var lasthelp = await poolConnection.request().query(`SELECT Date
-        FROM [DevOps].[Help_Desk_Table] WHERE Email = '${user.Email}'`);
+        ac2 = ac2.recordsets[0][0][""][1] - ac2.recordsets[0][0][""][0];
         lasthelp = lasthelp.recordsets[0];
         let mn = 0;
         let yr = 0;
@@ -111,19 +105,20 @@ const getChart = async function (req, res) {
         var poolConnection = await sql.connect(config);
         console.log("connected");
 
-        var spend = await poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(AmountEUR)
-        FROM [DevOps].[SpendData] ${spendinClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`);
-        spend = spend.recordsets[0];
-        
-        var save = await poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(CALC_AmountEUR_YTD_TY)
-         FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`);
-        save = save.recordsets[0];
+        let [spend, save, action] = await Promise.all([
+            poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(AmountEUR)
+        FROM [DevOps].[SpendData] ${spendinClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`),
+        poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(CALC_AmountEUR_YTD_TY)
+        FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`),
+        poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(AmountEUR)
+        FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`)
+        ]);
 
-        var action = await poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(AmountEUR)
-        FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`);
+        spend = spend.recordsets[0];
+        save = save.recordsets[0];
         action = action.recordsets[0];
 
-        function chart(spend,status){
+        function chart(spend){
         let ar = [];
         for (let i = 0; i < spend.length; i++) {
             let str = spend[i]["YearMonth"];
@@ -155,9 +150,9 @@ const getChart = async function (req, res) {
                 return ar;
         }
 
-        let a1 = chart(spend,"spend");
-        let a2 = chart(action,"action");
-        let a3 = chart(save,"saving");
+        let a1 = chart(spend);
+        let a2 = chart(action);
+        let a3 = chart(save);
 
         let final = [a1[0],a2[0],a3[0]];
 
@@ -224,16 +219,17 @@ const getCountry = async function (req, res) {
         var poolConnection = await sql.connect(config);
         console.log("connected");
 
-        var spend = await poolConnection.request().query(`SELECT [CountryCode],SUM(AmountEUR)
-        FROM [DevOps].[SpendData] ${spendinClause} GROUP BY [CountryCode] ORDER BY [CountryCode] ASC`);
+        let [spend, save, action] = await Promise.all([
+            poolConnection.request().query(`SELECT [CountryCode],SUM(AmountEUR)
+        FROM [DevOps].[SpendData] ${spendinClause} GROUP BY [CountryCode] ORDER BY [CountryCode] ASC`),
+        poolConnection.request().query(`SELECT [CountryCode],SUM(CALC_AmountEUR_YTD_TY)
+        FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY [CountryCode] ORDER BY [CountryCode] ASC`),
+        poolConnection.request().query(`SELECT [Entity_Country],SUM(AmountEUR)
+        FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY [Entity_Country] ORDER BY [Entity_Country] ASC`)
+        ]);
+
         spend = spend.recordsets[0];
-
-        var save = await poolConnection.request().query(`SELECT [CountryCode],SUM(CALC_AmountEUR_YTD_TY)
-        FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY [CountryCode] ORDER BY [CountryCode] ASC`);
         save = save.recordsets[0];
-
-        var action = await poolConnection.request().query(`SELECT [Entity_Country],SUM(AmountEUR)
-        FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY [Entity_Country] ORDER BY [Entity_Country] ASC`);
         action = action.recordsets[0];
 
         let data = {

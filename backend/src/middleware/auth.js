@@ -5,9 +5,8 @@ const auth = async function(req,res,next){
         let bearerHeader = req.headers['authorization'];
         if(!bearerHeader) return res.status(400).send({status:false , message:"Token is not available"});
         const bearer = bearerHeader.split(" ");
-        const bearerToken = bearer[1];
-        jwt.verify(bearerToken, "spendAnalyticPlatform");
-        req.userDetails = jwt.decode(bearerToken);
+        jwt.verify(bearer[1], "spendAnalyticPlatform");
+        req.userDetails = jwt.decode(bearer[1]);
         next();
     }
     catch(e)
