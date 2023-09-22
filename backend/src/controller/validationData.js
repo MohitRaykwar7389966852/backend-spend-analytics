@@ -7,18 +7,33 @@ const validationData = async function (req, res) {
         const inClause = req.inClause;
         var poolConnection = await sql.connect(config);
         console.log("connected");
-        var data = await poolConnection.request().query(`SELECT *
-        FROM [DevOps].[ValidationTable]`);
 
-        var grand = await poolConnection.request().query(`SELECT SUM(Sum_of_Grand_Total) AS grandTotal,COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS grandMap,COUNT(case when [New  L4 - Global Procurement] = null then 0 else 1 end) AS grandL4validation
-        FROM [DevOps].[ValidationTable]`);
+        let [data,grand,table,data1,data2] = await Promise.all([
+            poolConnection.request().query(`SELECT *
+            FROM [DevOps].[ValidationTable]`),
+            poolConnection.request().query(`SELECT SUM(Sum_of_Grand_Total) AS grandTotal,COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS grandMap,COUNT(case when [New  L4 - Global Procurement] = null then 0 else 1 end) AS grandL4validation
+            FROM [DevOps].[ValidationTable]`),
+            poolConnection.request().query(`SELECT [Company Code],SUM(Sum_of_Grand_Total) AS spend,COUNT(DISTINCT [Supplier Parent Name]) AS supplier,SUM(CASE WHEN [New  L4 - Global Procurement] = null THEN 0 ELSE Sum_of_Grand_Total END) AS validatedspend,COUNT(CASE WHEN [New  L4 - Global Procurement] = null THEN 0 ELSE Sum_of_Grand_Total END) AS pid,COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS map,COUNT(case when [New  L4 - Global Procurement] = null then 0 else 1 end) AS l4validation
+            FROM [DevOps].[ValidationTable] GROUP BY [Company Code]`),
+            poolConnection.request().query(`SELECT COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS [Ok by default],COUNT(case when [Proposed Status] = 'Change Category' then 1 else null end) AS [Change Category],COUNT(case when [Proposed Status] = 'Review Later' then 1 else null end) AS [Review Later]
+            FROM [DevOps].[ValidationData]`),
+            poolConnection.request().query(`SELECT [Company Code],SUM(Sum_of_Grand_Total)
+            FROM [DevOps].[ValidationTable] GROUP BY [Company Code]`)
+        ]);
+
+
+        // var data = await poolConnection.request().query(`SELECT *
+        // FROM [DevOps].[ValidationTable]`);
+
+        // var grand = await poolConnection.request().query(`SELECT SUM(Sum_of_Grand_Total) AS grandTotal,COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS grandMap,COUNT(case when [New  L4 - Global Procurement] = null then 0 else 1 end) AS grandL4validation
+        // FROM [DevOps].[ValidationTable]`);
         let grandTotal = grand.recordsets[0][0]["grandTotal"];
         let grandMap = grand.recordsets[0][0]["grandMap"];
         let grandL4validation = grand.recordsets[0][0]["grandL4validation"];
         
 
-        var table = await poolConnection.request().query(`SELECT [Company Code],SUM(Sum_of_Grand_Total) AS spend,COUNT(DISTINCT [Supplier Parent Name]) AS supplier,SUM(CASE WHEN [New  L4 - Global Procurement] = null THEN 0 ELSE Sum_of_Grand_Total END) AS validatedspend,COUNT(CASE WHEN [New  L4 - Global Procurement] = null THEN 0 ELSE Sum_of_Grand_Total END) AS pid,COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS map,COUNT(case when [New  L4 - Global Procurement] = null then 0 else 1 end) AS l4validation
-        FROM [DevOps].[ValidationTable] GROUP BY [Company Code]`);
+        // var table = await poolConnection.request().query(`SELECT [Company Code],SUM(Sum_of_Grand_Total) AS spend,COUNT(DISTINCT [Supplier Parent Name]) AS supplier,SUM(CASE WHEN [New  L4 - Global Procurement] = null THEN 0 ELSE Sum_of_Grand_Total END) AS validatedspend,COUNT(CASE WHEN [New  L4 - Global Procurement] = null THEN 0 ELSE Sum_of_Grand_Total END) AS pid,COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS map,COUNT(case when [New  L4 - Global Procurement] = null then 0 else 1 end) AS l4validation
+        // FROM [DevOps].[ValidationTable] GROUP BY [Company Code]`);
 1
         table = table.recordsets[0];
 
@@ -31,12 +46,12 @@ const validationData = async function (req, res) {
             table[i].l4validation = Math.ceil(p3)+"%";
         }
 
-        var data1 = await poolConnection.request().query(`SELECT COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS [Ok by default],COUNT(case when [Proposed Status] = 'Change Category' then 1 else null end) AS [Change Category],COUNT(case when [Proposed Status] = 'Review Later' then 1 else null end) AS [Review Later]
-        FROM [DevOps].[ValidationData]`);
+        // var data1 = await poolConnection.request().query(`SELECT COUNT(case when [Proposed Status] = 'Ok by default' then 1 else null end) AS [Ok by default],COUNT(case when [Proposed Status] = 'Change Category' then 1 else null end) AS [Change Category],COUNT(case when [Proposed Status] = 'Review Later' then 1 else null end) AS [Review Later]
+        // FROM [DevOps].[ValidationData]`);
         data1 = data1.recordsets[0][0];
 
-        var data2 = await poolConnection.request().query(`SELECT [Company Code],SUM(Sum_of_Grand_Total)
-        FROM [DevOps].[ValidationTable] GROUP BY [Company Code]`);
+        // var data2 = await poolConnection.request().query(`SELECT [Company Code],SUM(Sum_of_Grand_Total)
+        // FROM [DevOps].[ValidationTable] GROUP BY [Company Code]`);
         data2 = data2.recordsets[0];
         let sum=0;
         for(let i=0; i<data2.length; i++){

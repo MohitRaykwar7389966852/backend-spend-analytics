@@ -107,11 +107,11 @@ const getChart = async function (req, res) {
 
         let [spend, save, action] = await Promise.all([
             poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(AmountEUR)
-        FROM [DevOps].[SpendData] ${spendinClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`),
-        poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(CALC_AmountEUR_YTD_TY)
-        FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`),
-        poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(AmountEUR)
-        FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`)
+            FROM [DevOps].[SpendData] ${spendinClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`),
+            poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(CALC_AmountEUR_YTD_TY)
+            FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`),
+            poolConnection.request().query(`SELECT CompanyName,YearMonth,SUM(AmountEUR)
+            FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY CompanyName,YearMonth ORDER BY CompanyName,YearMonth ASC`)
         ]);
 
         spend = spend.recordsets[0];
@@ -246,21 +246,6 @@ const getCountry = async function (req, res) {
         res.status(500).send({ status: false, message: e.message });
     }
 };
-
-// const deleteFiles = async function (req, res) {
-//     try {
-//         var poolConnection = await sql.connect(config);
-//         console.log("connected");
-//         var fileData = await poolConnection.request().query(`DELETE
-//         FROM [DevOps].[Table_FileMgr]`);
-//         console.log(fileData);
-//         poolConnection.close();
-//         console.log("disconnected");
-//         return res.status(200).send({ result: fileData , message:"files deleted successfully" });
-//     } catch (e) {
-//         res.status(500).send({ status: false, message: e.message });
-//     }
-// };
 
 module.exports = {
     getKpi, getChart, getActivity, getCountry
