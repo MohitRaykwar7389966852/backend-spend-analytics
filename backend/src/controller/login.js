@@ -75,7 +75,7 @@ const signin = async function (req, res) {
             Job: loginArray[0].Job,
             Access: access.Access
           };
-        const token = jwt.sign(obj,"spendAnalyticPlatform", { expiresIn: '10h' });
+        const token = jwt.sign(obj,"spendAnalyticPlatform", { expiresIn: '7d' });
         poolConnection.close();
         console.log("disconnected");
         return res.status(200).send({status:true,result:{token:JSON.stringify(token),isAuth:isAdmin}, message:"Login successfully" });

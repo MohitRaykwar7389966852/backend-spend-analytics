@@ -142,6 +142,7 @@ const actionTreeById = async function (req, res) {
 
 const actionAdd = async function (req, res) {
     try {
+        const user = req.userDetails;
         const { body, files } = req;
         console.log(body);
         console.log(files);
@@ -173,8 +174,8 @@ const actionAdd = async function (req, res) {
         }
         var inserted = await poolConnection.request()
             .query(`INSERT INTO DevOps.ActionTracking_tree_test 
-        (Id,ActionType,ActionName,ActionNumber,ActionDescription,Owner,Approver,Attachment,EditedOn,Status)
-        VALUES(${nextid},'${ActionType}','${ActionName}',${acNum},'${ActionDescription}','${Owner}','${Approver}','${attachmentUrl}','${date}','Pending')
+        (Id,ActionType,ActionName,ActionNumber,ActionDescription,Owner,Approver,Attachment,EditedOn,Status,ownerEmail,approverResponse)
+        VALUES(${nextid},'${ActionType}','${ActionName}',${acNum},'${ActionDescription}','${Owner}','${Approver}','${attachmentUrl}','${date}','Pending','${user.Email}','')
         `);
         console.log(inserted);
         poolConnection.close();
@@ -261,17 +262,19 @@ const actionApproval = async function (req, res) {
         let date = new Date().toLocaleString("en-US", {
             timeZone: "Asia/Kolkata",
         });
-        console.log(Status,date,Id);
+        console.log(Status,date,Id,RejectDes);
         var poolConnection = await sql.connect(config);
         console.log("connected");
-        var st = await poolConnection.request().query(`SELECT Status
+        var st = await poolConnection.request().query(`SELECT Status,ownerEmail
         FROM [DevOps].[ActionTracking_tree_test] WHERE Id = ${Id}`);
         let lastStatus = st.recordset[0].Status;
+        let userMail = st.recordset[0].ownerEmail;
+        console.log(userMail);
         if (lastStatus == "Pending") {
             let updated = await poolConnection
                 .request()
                 .query(
-                    `UPDATE DevOps.ActionTracking_tree_test SET Status =${Status} , EditedOn = '${date}' WHERE Id = ${Id}`
+                    `UPDATE DevOps.ActionTracking_tree_test SET Status ='${Status}' , EditedOn = '${date}' , approverResponse = '${RejectDes}' WHERE Id = ${Id}`
                 );
             let actionData = await poolConnection
                 .request()
@@ -312,7 +315,7 @@ const actionApproval = async function (req, res) {
                       <body style="font-family: open sans;">
                       <h3 class="text-primary">Hello ${Owner}</h3>
                       <p style="color:#757575">Action with data mentioned below is ${Status} by approver - ${Approver}</p>
-                      <p style="color:#757575; font-size:13px;">${RejectDes}</p>
+                      <p style="color:#757575; font-size:13px;">Response Message - ${RejectDes}</p>
                       <div style="font-size:13px;">
                       <p>Action Type : ${ActionType}</p>
                       <p>Action Name : ${ActionName}</p>
@@ -349,10 +352,28 @@ const actionApproval = async function (req, res) {
                     console.log(data);
                 }
             });
+
+            //notification
+            let resMsg = "";
+            let sts;
+            let defaultValue = false;
+            if(Status == "Approved"){
+                sts = "success";
+                resMsg = "action request approved";
+            }
+            else if(Status == "Rejected"){
+                sts = "error";
+                resMsg = "action request rejected";
+            }
             res.status(200).send({
-                message: "this action is updated by approver",
+                message: resMsg,
                 result: updated,
             });
+            await poolConnection.request().query(`INSERT INTO DevOps.Notification_Table 
+            (Email, Section, Status, Message, isRead,isDelete,Timestumps)
+            VALUES('${userMail}','action','${sts}','${resMsg}','${defaultValue}','${defaultValue}','${date}')
+        `);
+
         } else if (lastStatus == "Approved") {
             res.status(200).send({
                 message: "this action is approved already",
