@@ -131,9 +131,11 @@ const addCategory = async function (req, res) {
         console.log(inserted);
         poolConnection.close();
         console.log("disconnected");
-        let url1 = `http://localhost:4000/categoryapproval/${nextid}?Status='Approved'`;
-        let url2 = `https://statxo-backend.onrender.com/actionapproval/${nextid}?Status='Rejected'`;
-        let siteView = `http://localhost:3000/categoryapproval/${nextid}`;
+        // let url1 = `http://localhost:4000/categoryapproval/${nextid}?Status='Approved'`;
+        // let url2 = `https://statxo-backend.onrender.com/actionapproval/${nextid}?Status='Rejected'`;
+        // <a style="background:#26a69a; margin-right:4px;" href=${url1}>Approve</a>
+        // <a style="background: #ef5350; margin-right:4px;" href=${url2}>Reject</a>
+        let siteView = `https://spendxo.in/categoryapproval/${nextid}`;
 
         const params = {
             Destination: {
@@ -157,8 +159,6 @@ const addCategory = async function (req, res) {
                   <body style="font-family: open sans;">
                   <h3 style="margin-bottom:20px;">Hello ${Approver}</h3>
                   <div>
-                      <a style="background:#26a69a; margin-right:4px;" href=${url1}>Approve</a>
-                      <a style="background: #ef5350; margin-right:4px;" href=${url2}>Reject</a>
                       <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
                   </div>
                   <p style="color:#757575; margin-top:20px;">${Owner} want approval for the new category with deatil mentioned below :-</p>
