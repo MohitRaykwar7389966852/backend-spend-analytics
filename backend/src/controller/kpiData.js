@@ -96,12 +96,6 @@ const getChart = async function (req, res) {
         if(req["SavingData_2_Clause"]) savinginClause = req["SavingData_2_Clause"];
         if(req["ActionTracking_test_Clause"]) actioninClause = req["ActionTracking_test_Clause"];
 
-        function formatCompactNumber(number) {
-            number = number + "";
-            num = number.split(".");
-            return Number(num[0]);
-        }
-
         var poolConnection = await sql.connect(config);
         console.log("connected");
 
@@ -118,44 +112,29 @@ const getChart = async function (req, res) {
         save = save.recordsets[0];
         action = action.recordsets[0];
 
-        function chart(spend){
-        let ar = [];
-        for (let i = 0; i < spend.length; i++) {
-            let str = spend[i]["YearMonth"];
-            let year = str.slice(0, 4);
-            let month = str.slice(str.length - 2);
-            let companyKey = spend[i]["CompanyName"];
-            if(ar.length == 0 ){
-                ar.push({
-                    [companyKey]:{
-                        [year]:[formatCompactNumber(spend[i][""])]
-                    }
-                });
+        function chart(res){
+        const formattedData = {};
+        res.forEach(entry => {
+            const companyName = entry.CompanyName;
+            const year = entry.YearMonth.substring(0, 4);
+            const month = entry.YearMonth.substring(4);
+        
+            if (!formattedData[companyName]) {
+                formattedData[companyName] = {};
             }
-            else if(ar[ar.length-1][companyKey]){
-                if(ar[ar.length-1][companyKey][year]){
-                    let arr = ar[ar.length-1][companyKey][year];
-                    arr.push(formatCompactNumber(spend[i][""]));
-                    ar[ar.length-1][companyKey][year] = arr;
-                }
-                else{
-                    ar[ar.length-1][companyKey][year] = [formatCompactNumber(spend[i][""])];
-                }}
-                else if(!ar[ar.length-1][companyKey]){
-                    ar[ar.length-1][companyKey]  = {
-                        [year]:[formatCompactNumber(spend[i][""])]
-                    }
-                }
+        
+            if (!formattedData[companyName][year]) {
+                formattedData[companyName][year] = [];
             }
-                return ar;
+        
+            const roundedValue = Math.round(Number(entry['']));
+            formattedData[companyName][year].push(roundedValue);
+        });
+        return formattedData;
         }
 
-        let a1 = chart(spend);
-        let a2 = chart(action);
-        let a3 = chart(save);
-
-        let final = [a1[0],a2[0],a3[0]];
-
+        let final = [chart(spend),chart(action),chart(save)];
+        
         poolConnection.close();
         console.log("disconnected");
         return res.status(200).send({ result: final, message: "chart fetched successfully" });
