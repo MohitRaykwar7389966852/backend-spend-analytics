@@ -210,23 +210,22 @@ const helpResponse = async function (req, res) {
     try {
         let Id = req.params.Id;
         let status = req.query.Status;
-        let adminComment = req.query.adminComment;
-        console.log(adminComment);
-        // if (adminComment === undefined) adminComment = "";
-        // let date = new Date().toLocaleString("en-US", {
-        //     timeZone: "Asia/Kolkata",
-        // // });
-        // console.log(Status,date,Id);
+        let adminComment = req.query.Description;
         var poolConnection = await sql.connect(config);
         console.log("connected");
         var st = await poolConnection.request().query(`SELECT Status
         FROM [DevOps].[Help_Desk_Table] WHERE Id = ${Id}`);
         let lastStatus = st.recordset[0].Status;
-        if (lastStatus == "Pending") {
-            let updated = await poolConnection
+        let date = new Date().toLocaleString("en-US", {
+            timeZone: "Asia/Kolkata",
+        });
+        let resMsg = "";
+        let updated;
+        if(lastStatus == "Pending" || (lastStatus == "In Progress" && (status == "Completed" || status == "Rejected"))) {
+            updated = await poolConnection
                 .request()
                 .query(
-                    `UPDATE DevOps.Help_Desk_Table SET Admin_Comment ='${adminComment}', Status =${status} WHERE Id = ${Id}`
+                    `UPDATE DevOps.Help_Desk_Table SET Admin_Comment ='${adminComment}', Status ='${status}' WHERE Id = ${Id}`
                 );
             let queryData = await poolConnection
                 .request()
@@ -253,7 +252,7 @@ const helpResponse = async function (req, res) {
 
             const params = {
                 Destination: {
-                  ToAddresses: [userMail], // Replace with the recipient's email address
+                  ToAddresses: [userMail],
                 },
                 Message: {
                   Body: {
@@ -277,7 +276,7 @@ const helpResponse = async function (req, res) {
                       <p>Title : ${Title}</p>
                       <p>Section : ${Section}</p>
                       <p>Priority : ${Priority}</p>
-                      <p>Date : ${Date}</p>
+                      <p>Request Date : ${Date}</p>
                       <p>Status : ${Status}</p>
                       <p>Comment : ${Comment}</p>
                       <p>Attachment : <a style="background: #5c6bc0;" href=${Attachment}>Attachment</a></p>
@@ -299,35 +298,56 @@ const helpResponse = async function (req, res) {
                     Data: 'Help Desk Response',
                   },
                 },
-                Source: process.env.STATXO_MAIL, // Replace with the sender's email address
+                Source: process.env.STATXO_MAIL, 
               };
               
               ses.sendEmail(params, (err, data) => {
                 if (err) {
                     console.log(err);
-                    return res.status(400).send({ status:false,message: err.message });
+                    // return res.status(400).send({ status:false,message: err.message });
                 } else {
                     console.log(data);
                 }
             });
-            
-            res.status(200).send({
-                    message: "help query status updated successfully",
-                    result: updated,
-                });
-        } else if (lastStatus == "In Progress") {
-            res.status(200).send({
-                message: "Help query is already in progress",
-            });
-        } else if (lastStatus == "Rejected"){
-            res.status(200).send({
-                message: "Help query is already rejected",
-            });
+
+            //notification
+            let sts;
+            let defaultValue = false;
+            if(Status == "Completed"){
+                sts = "success";
+                resMsg = "help request completed";
+            }
+            else if(Status == "In Progress"){
+                sts = "info";
+                resMsg = "help request in progress";
+            }
+            else if(Status == "Rejected"){
+                sts = "error";
+                resMsg = "help request rejected";
+            }
+            console.log(date);
+            await poolConnection.request().query(`INSERT INTO DevOps.Notification_Table 
+            (Email, Section, Status, Message, isRead,isDelete,Timestumps)
+            VALUES('${userMail}','help desk','${sts}','${resMsg}','${defaultValue}','${defaultValue}','${date}')
+        `);
         }
+        else if (lastStatus == "In Progress" && status == "In Progress") {
+            resMsg = "Help query is already in progress";
+        }
+        else if (lastStatus == "Rejected" && (status == "Completed" || status == "In Progress" || status == "Rejected")) {
+            resMsg = "Help query is already rejected";
+        }
+        else if (lastStatus == "Completed" && (status == "Completed" || status == "In Progress" || status == "Rejected")) {
+            resMsg = "Help query is already completed";
+        }        
+        
         poolConnection.close();
         console.log("disconnected");
 
-        return;
+        return res.status(200).send({
+            message: resMsg,
+            // result: updated,
+        });
     } catch (e) {
         res.status(500).send({ status: false, message: e.message });
     }

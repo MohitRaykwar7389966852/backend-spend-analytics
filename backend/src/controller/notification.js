@@ -18,7 +18,8 @@ const notification = async function (req, res) {
         });
         let defaultValue = false;
         let email=user.Email;
-        if(req.query) email = req.query.Email;
+        console.log(req.query);
+        if(req.query.hasOwnProperty("Email")) email = req.query.Email;
         const insert = await poolConnection.request().query(`INSERT INTO DevOps.Notification_Table 
             (Email, Section, Status, Message, isRead,isDelete,Timestumps)
             VALUES('${email}','${section}','${status}','${message}','${defaultValue}','${defaultValue}','${date}')
