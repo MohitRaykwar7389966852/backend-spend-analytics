@@ -102,7 +102,7 @@ const helpDesk = async function (req, res) {
         console.log(id);
         poolConnection.close();
         console.log("disconnected");
-        let siteView = `http://localhost:3000/help-response/${id}`;
+        let siteView = `https://spendxo.com/help-response/${id}`;
 
         const params = {
             Destination: {

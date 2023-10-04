@@ -135,7 +135,7 @@ const addCategory = async function (req, res) {
         // let url2 = `https://statxo-backend.onrender.com/actionapproval/${nextid}?Status='Rejected'`;
         // <a style="background:#26a69a; margin-right:4px;" href=${url1}>Approve</a>
         // <a style="background: #ef5350; margin-right:4px;" href=${url2}>Reject</a>
-        let siteView = `https://spendxo.in/categoryapproval/${nextid}`;
+        let siteView = `https://spendxo.com/categoryapproval/${nextid}`;
 
         const params = {
             Destination: {
