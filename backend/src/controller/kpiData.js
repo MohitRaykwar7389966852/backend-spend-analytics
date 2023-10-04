@@ -199,12 +199,12 @@ const getCountry = async function (req, res) {
         console.log("connected");
 
         let [spend, save, action] = await Promise.all([
-            poolConnection.request().query(`SELECT [CountryCode],SUM(AmountEUR)
-        FROM [DevOps].[SpendData] ${spendinClause} GROUP BY [CountryCode] ORDER BY [CountryCode] ASC`),
-        poolConnection.request().query(`SELECT [CountryCode],SUM(CALC_AmountEUR_YTD_TY)
-        FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY [CountryCode] ORDER BY [CountryCode] ASC`),
-        poolConnection.request().query(`SELECT [Entity_Country],SUM(AmountEUR)
-        FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY [Entity_Country] ORDER BY [Entity_Country] ASC`)
+            poolConnection.request().query(`SELECT [CountryCode],CompanyName,SUM(AmountEUR)
+        FROM [DevOps].[SpendData] ${spendinClause} GROUP BY [CountryCode],CompanyName ORDER BY [CountryCode] ASC`),
+        poolConnection.request().query(`SELECT [CountryCode],CompanyName,SUM(CALC_AmountEUR_YTD_TY)
+        FROM [DevOps].[SavingData_2] ${savinginClause} GROUP BY [CountryCode],CompanyName ORDER BY [CountryCode] ASC`),
+        poolConnection.request().query(`SELECT [Entity_Country],CompanyName,SUM(AmountEUR)
+        FROM [DevOps].[ActionTracking_test] ${actioninClause} GROUP BY [Entity_Country],CompanyName ORDER BY [Entity_Country] ASC`)
         ]);
 
         spend = spend.recordsets[0];
