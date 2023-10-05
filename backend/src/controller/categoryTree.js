@@ -82,8 +82,12 @@ const categoryTree = async function (req, res) {
     try {
         var poolConnection = await sql.connect(config);
         console.log("connected");
+
+        let catClause=``;
+        if(req["CategoryTreeTable_Clause"]) catClause = req["CategoryTreeTable_Clause"];
+
         var data = await poolConnection.request().query(`SELECT *
-        FROM [DevOps].[CategoryTreeTable]`);
+        FROM [DevOps].[CategoryTreeTable] ${catClause}`);
         poolConnection.close();
         console.log("disconnected");
         console.log(data.recordsets);
