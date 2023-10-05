@@ -61,14 +61,14 @@ router.get("/readNotification",auth,readNotification);
 router.delete("/delNotification",auth,delNotification);
 
 //category tree
-router.get("/categoryTree",auth,categoryTree);
+router.get("/categoryTree",auth,rls,categoryTree);
 router.post("/addCategory",auth,addCategory);
 router.get("/categoryTreeById/:categoryId",auth,categoryTreeById);
 router.get("/categoryapproval/:Id",auth,categoryApproval);
 
 //validation
-router.get("/validationData",auth,validationData);
-router.get("/validationMain",auth,validationMainTable);
+router.get("/validationData",auth,rls,validationData);
+router.get("/validationMain",auth,rls,validationMainTable);
 
 //kpi
 router.get("/getKpi",auth,rls,getKpi);
