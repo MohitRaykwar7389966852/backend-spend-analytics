@@ -79,6 +79,9 @@ const validationMainTable = async function (req, res) {
         var poolConnection = await sql.connect(config);
         console.log("connected");
 
+        let val1Clause=``;
+        if(req["ValidationTable_Clause"]) val1Clause = req["ValidationTable_Clause"];
+
         let data = await poolConnection.request().query(`SELECT *
         FROM [DevOps].[ValidationTable] ${val1Clause}`);
         
