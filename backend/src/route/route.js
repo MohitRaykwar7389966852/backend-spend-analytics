@@ -14,7 +14,7 @@ const { fileManager,getFiles,deleteFiles,updateFiles } = require("../controller/
 const { signup,signin,deleteUser,resetPass,verifyPass,access } = require("../controller/login");
 const { notification,getNotification,delNotification,readNotification } = require("../controller/notification");
 const { categoryTree,addCategory,categoryTreeById, categoryApproval,mailtest} = require("../controller/categoryTree");
-const { validationData, validationShortTable } = require("../controller/validationData");
+const { validationData, validationMainTable } = require("../controller/validationData");
 const { getKpi,getChart,getActivity,getCountry } = require("../controller/kpiData");
 const { SpendData,SavingData } = require("../controller/masterData");
 const { profile } = require("../controller/profile");
@@ -68,7 +68,7 @@ router.get("/categoryapproval/:Id",auth,categoryApproval);
 
 //validation
 router.get("/validationData",auth,validationData);
-router.get("/validationShort",auth,validationShortTable);
+router.get("/validationMain",auth,validationMainTable);
 
 //kpi
 router.get("/getKpi",auth,rls,getKpi);
