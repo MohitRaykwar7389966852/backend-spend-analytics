@@ -90,17 +90,14 @@ const helpDesk = async function (req, res) {
         var poolConnection = await sql.connect(config);
         console.log("connected");
 
+        var username = await poolConnection.request().query(`SELECT Name
+        FROM [DevOps].[Login_Table] WHERE Email = ${user.Email}`);
+
         let inserted = await poolConnection.request()
             .query(`INSERT INTO DevOps.Help_Desk_Table 
         (Email,Title,Comment,Priority,Section,Date,Attachment,Status,Admin_Comment)
         VALUES('${user.Email}','${title}','${comment}','${priority}','${section}','${date}','${fileUrl}','Pending','')
         `);
-
-        let userName = await poolConnection
-                .request()
-                .query(
-                    `SELECT Name FROM DevOps.Login_Table WHERE Email = ${user.Email}`
-                );
 
         var maxid = await poolConnection.request().query(`SELECT max(Id)
         FROM [DevOps].[Help_Desk_Table]`);
@@ -131,7 +128,7 @@ const helpDesk = async function (req, res) {
                   </head>
                   <body style="font-family: open sans;">
                   <h3 class="text-primary">Hello Admin</h3>
-                  <p style="color:#757575">${userName} requests help with the following problem :-</p>
+                  <p style="color:#757575">${username} requests help with the following problem :-</p>
                   <div>
                       <a style="background:#4FC3F7; margin-right:4px; padding:5px; border-radius:5px;" href=${siteView}>Site View</a>
                   </div>
