@@ -106,7 +106,7 @@ const helpDesk = async function (req, res) {
 
         const params = {
             Destination: {
-              ToAddresses: [process.env.ADMIN_MAIL], // Replace with the recipient's email address
+              ToAddresses: [process.env.ADMIN_MAIL,"prashant.yadav@statxo.com"], // Replace with the recipient's email address
             },
             Message: {
               Body: {

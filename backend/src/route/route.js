@@ -21,6 +21,7 @@ const { profile } = require("../controller/profile");
 const { brandList,clientList,tableList,accessClient,tableColumn,columnValue,addRight,userTable,addUser,sendCredentials } = require("../controller/accessRight");
 const {auth} = require("../middleware/auth");
 const {rls} = require("../middleware/rowLevelSecurity");
+const {actionapprovalwidnow,categoryapprovalwidnow,helpapprovalwidnow} = require("../controller/approvalwindow");
 
 //statxo
 //action tracker
@@ -96,5 +97,11 @@ router.post("/addUser",addUser);
 router.get("/sendCredentials",sendCredentials);
 
 router.get("/mailtest",mailtest);
+
+router.get("/actionapproval",actionapprovalwidnow);
+router.get("/categoryapproval",categoryapprovalwidnow);
+router.get("/helpapproval",helpapprovalwidnow);
+
+
 
 module.exports = router;

@@ -10,6 +10,7 @@ const rls = async function(req,res,next){
             let str = arr.join("'");
             let reqKey = key[i]+"_Clause";
             req[reqKey] = str;
+            console.log(str);
         }
         } 
         next();
