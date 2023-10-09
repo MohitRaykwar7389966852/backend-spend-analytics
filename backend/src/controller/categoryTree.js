@@ -286,7 +286,7 @@ const categoryApproval = async function (req, res) {
                       </head>
                       <body style="font-family: open sans;">
                       <h3 class="text-primary">Hello ${Owner}</h3>
-                      <p style="color:#757575">Category with data mentioned below is ${Status} by approver - ${Approver}</p>
+                      <p style="color:#757575">The category associated with the provided details is ${Status} by approver - ${Approver}</p>
                       <p style="color:#757575; font-size:13px;">Response Message - ${RejectDes}</p>
                       <div style="font-size:13px;">
                       <p>L1 Category : ${L1Category}</p>

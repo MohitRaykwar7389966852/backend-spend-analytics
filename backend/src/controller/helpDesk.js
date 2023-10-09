@@ -96,6 +96,12 @@ const helpDesk = async function (req, res) {
         VALUES('${user.Email}','${title}','${comment}','${priority}','${section}','${date}','${fileUrl}','Pending','')
         `);
 
+        let userName = await poolConnection
+                .request()
+                .query(
+                    `SELECT Name FROM DevOps.Login_Table WHERE Email = ${user.Email}`
+                );
+
         var maxid = await poolConnection.request().query(`SELECT max(Id)
         FROM [DevOps].[Help_Desk_Table]`);
         let id = maxid.recordset[0][""];
@@ -125,7 +131,7 @@ const helpDesk = async function (req, res) {
                   </head>
                   <body style="font-family: open sans;">
                   <h3 class="text-primary">Hello Admin</h3>
-                  <p style="color:#757575">${user.Email} Send A Help Request</p>
+                  <p style="color:#757575">${userName} requests help with the following problem :-</p>
                   <div>
                       <a style="background:#4FC3F7; margin-right:4px; padding:5px; border-radius:5px;" href=${siteView}>Site View</a>
                   </div>
