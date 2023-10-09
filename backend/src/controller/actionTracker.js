@@ -208,9 +208,9 @@ const actionAdd = async function (req, res) {
                   <body style="font-family: open sans;">
                   <h3 style="margin-bottom:20px;">Hello ${Approver}</h3>
                   <div>
-                      <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
+                      <a style="background:#4FC3F7; margin-right:4px; padding:5px; border-radius:5px;" href=${siteView}>Site View</a>
                   </div>
-                  <p style="color:#757575; margin-top:20px;">${Owner} want approval for the action with deatil mentioned below :-</p>
+                  <p style="color:#757575; margin-top:20px;">${Owner} wants approval for the action with the following details :-</p>
                   <div style="font-size:13px;">
                   <p>Action Type : ${ActionType}</p>
                   <p>Action Name : ${ActionName}</p>
@@ -218,7 +218,7 @@ const actionAdd = async function (req, res) {
                   <p>Action Description : ${ActionDescription}</p>
                   <p>Owner : ${Owner}</p>
                   <p>Approver : ${Approver}</p>
-                  <p>Attachment : <a style="background: #5c6bc0;" href=${attachmentUrl}>Attachment</a></p>
+                  <p>Attachment : <a style="background: #5c6bc0; padding:5px; border-radius:5px;" href=${attachmentUrl}>Attachment</a></p>
                   </div>
                   <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
                   <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>

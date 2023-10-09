@@ -125,9 +125,9 @@ const helpDesk = async function (req, res) {
                   </head>
                   <body style="font-family: open sans;">
                   <h3 class="text-primary">Hello Admin</h3>
-                  <p style="color:#757575">User Send A Help Request</p>
+                  <p style="color:#757575">${user.Email} Send A Help Request</p>
                   <div>
-                      <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
+                      <a style="background:#4FC3F7; margin-right:4px; padding:5px; border-radius:5px;" href=${siteView}>Site View</a>
                   </div>
                   <div style="font-size:13px;">
                   <p>Title : ${title}</p>
@@ -135,7 +135,7 @@ const helpDesk = async function (req, res) {
                   <p>Date : ${date}</p>
                   <p>Priority : ${priority}</p>
                   <p>Section : ${section}</p>
-                  <p>Attachment : <a style="background: #5c6bc0;" href=${fileUrl}>Attachment</a></p>
+                  <p>Attachment : <a style="background: #5c6bc0; padding:5px; border-radius:5px;" href=${fileUrl}>Attachment</a></p>
                   </div>
                   <h1 style="color:#C2185B; margin-bottom:0px;">STATXO</h1>
                   <p style="color:#C2185B; font-size:10px;  margin-bottom:10px;">Powering Smarter Decisions</p>

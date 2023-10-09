@@ -163,9 +163,9 @@ const addCategory = async function (req, res) {
                   <body style="font-family: open sans;">
                   <h3 style="margin-bottom:20px;">Hello ${Approver}</h3>
                   <div>
-                      <a style="background:#4FC3F7; margin-right:4px;" href=${siteView}>Site View</a>
+                      <a style="background:#4FC3F7; margin-right:4px; padding:5px; border-radius:5px;" href=${siteView}>Site View</a>
                   </div>
-                  <p style="color:#757575; margin-top:20px;">${Owner} want approval for the new category with deatil mentioned below :-</p>
+                  <p style="color:#757575; margin-top:20px;">${Owner} wants approval for the action with the following details :-</p>
                   <div style="font-size:13px;">
                   <p>L1 Category : ${l1category}</p>
                   <p>L2 Category : ${l2category}</p>
