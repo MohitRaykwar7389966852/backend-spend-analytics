@@ -40,36 +40,14 @@ const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
 const mailtest = async function (req, res) {
     try {
-
-        // console.log("started");
-        // const params = {
-        //     Destination: {
-        //       ToAddresses: ['mohit.raykwar@statxo.com'], // Replace with the recipient's email address
-        //     },
-        //     Message: {
-        //       Body: {
-        //         Text: {
-        //           Data: 'Hello, this is the email body.',
-        //         },
-        //       },
-        //       Subject: {
-        //         Data: 'Your Subject Here',
-        //       },
-        //     },
-        //     Source: 'mraykwar99@outlook.com', // Replace with the sender's email address
-        //   };
-          
-        //   ses.sendEmail(params, (err, data) => {
-        //     if (err) {
-        //       console.error('Error sending email:', err);
-        //     } else {
-        //       console.log('Email sent:', data);
-        //     }
-        //   });
-        let files = req.files;
-        let Image = files[0];
-        let imageUrl = await uploadFile(Image);
-        console.log(imageUrl);
+        var poolConnection = await sql.connect(config);
+        console.log("connected");
+        var username = await poolConnection.request().query(`SELECT Name
+        FROM [DevOps].[Login_Table] WHERE Email = 'mohit.raykwar@statxo.com'`);
+        username = username.recordset[0].Name;
+        poolConnection.close();
+        console.log("disconnected");
+        return res.status(200).send({ result: username });
 
     } catch (e) {
         res.status(500).send({ status: false, message: e.message });
