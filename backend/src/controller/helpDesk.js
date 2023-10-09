@@ -250,6 +250,10 @@ const helpResponse = async function (req, res) {
                 Email
             } = qData;
 
+            var username = await poolConnection.request().query(`SELECT Name
+            FROM [DevOps].[Login_Table] WHERE Email = '${Email}'`);
+            username = username.recordset[0].Name;
+
             console.log(qData);
 
             let userMail = Email;
@@ -274,7 +278,7 @@ const helpResponse = async function (req, res) {
                           </style>
                       </head>
                       <body style="font-family: open sans;">
-                      <h3 class="text-primary">Hello Admin</h3>
+                      <h3 class="text-primary">Hello ${username}</h3>
                       <p style="color:#757575">Help Request with data mentioned below is ${Status}</p>
                       <div style="font-size:13px;">
                       <p>Title : ${Title}</p>
