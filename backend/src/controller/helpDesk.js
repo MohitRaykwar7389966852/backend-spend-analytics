@@ -97,7 +97,7 @@ const helpDesk = async function (req, res) {
         `);
 
         var username = await poolConnection.request().query(`SELECT Name
-        FROM [DevOps].[Login_Table] WHERE Email = ${user.Email}`);
+        FROM [DevOps].[Login_Table] WHERE Email = '${user.Email}'`);
         username = username.recordset[0].Name;
 
         var maxid = await poolConnection.request().query(`SELECT max(Id)
